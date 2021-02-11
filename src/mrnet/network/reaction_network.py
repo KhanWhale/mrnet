@@ -781,6 +781,7 @@ class ReactionNetwork(MSONable):
         """
         uniq_rxns = {}
         mol_nodes = 0
+        edges = self.graph.number_of_edges()
         for node in self.graph.nodes():
             # count unique reaction nodes
             if isinstance(node, str):
@@ -797,14 +798,18 @@ class ReactionNetwork(MSONable):
                 reaction_key = "+".join(sorted_reac_list) + "->" + "+".join(sorted_prod_list)
                 if reaction_key in uniq_rxns.keys():
                     uniq_rxns[reaction_key] = uniq_rxns[reaction_key] + 1
+                    edges -= len(sorted_prod_list)
                 else:
                     uniq_rxns[reaction_key] = 1
             else:
                 # count molecule nodes
                 mol_nodes += 1
-        print("Reaction nodes: ", len(uniq_rxns.keys()))
+        print("Unique reaction nodes: ", len(uniq_rxns.keys()))
         print("Molecule nodes:", mol_nodes)
-        print("Real Nodes:", sum([v for v in uniq_rxns.values()]) + mol_nodes)
+        print("Remaining edges", edges)
+        print("Remaining nodes", len(uniq_rxns.keys()) + mol_nodes)
+        print("Original # of Nodes:", sum([v for v in uniq_rxns.values()]) + mol_nodes)
+        print("Original # of Edges:", self.graph.number_of_edges())
 
     def build_PR_record(self) -> Mapping_Record_Dict:
         """
