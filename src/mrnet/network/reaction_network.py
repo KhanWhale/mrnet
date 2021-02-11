@@ -761,7 +761,7 @@ class ReactionNetwork(MSONable):
         # BULK OF EFFORT IS HERE:
         self.PR_record = self.build_PR_record()  # begin creating PR list
         self.Reactant_record = self.build_reactant_record()  # begin creating rct list
-
+        self.identify_unique_reactions()
         return self.graph
 
     def add_reaction(self, graph_representation: nx.DiGraph):
@@ -773,6 +773,38 @@ class ReactionNetwork(MSONable):
         """
         self.graph.add_nodes_from(graph_representation.nodes(data=True))
         self.graph.add_edges_from(graph_representation.edges(data=True))
+
+    def identify_unique_reactions(self):
+        """
+            Utility method to count unique reactions in the network
+           *Treats forward and reverse reactions as distinct
+        """
+        uniq_rxns = {}
+        mol_nodes = 0
+        for node in self.graph.nodes():
+            # count unique reaction nodes
+            if isinstance(node, str):
+                reactants = node.split(",")[0]
+                products = node.split(",")[1]
+                sorted_reac_list = []
+                sorted_prod_list = []
+                for r in reactants.split("+PR_"):
+                    sorted_reac_list.append(r)
+                for p in products.split("+"):
+                    sorted_prod_list.append(p)
+                sorted_reac_list.sort()
+                sorted_prod_list.sort()
+                reaction_key = "+".join(sorted_reac_list) + "->" + "+".join(sorted_prod_list)
+                if reaction_key in uniq_rxns.keys():
+                    uniq_rxns[reaction_key] = uniq_rxns[reaction_key] + 1
+                else:
+                    uniq_rxns[reaction_key] = 1
+            else:
+                # count molecule nodes
+                mol_nodes += 1
+        print("Reaction nodes: ", len(uniq_rxns.keys()))
+        print("Molecule nodes:", mol_nodes)
+        print("Real Nodes:", sum([v for v in uniq_rxns.values()]) + mol_nodes)
 
     def build_PR_record(self) -> Mapping_Record_Dict:
         """
